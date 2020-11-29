@@ -3,19 +3,22 @@ version: '3.7'
 networks:
   nlpjs:
 
+volumes:
+  mongo_data:
+
 services:
+
   mongo:
     image: mongo:4.0.11
-    container_name: nlpjs_mongo
     environment:
       - MONGO_INITDB_ROOT_USERNAME=myadmin
       - MONGO_INITDB_ROOT_PASSWORD=myadmin
       - MONGO_INITDB_DATABASE=nlpjs
+      - MONGO_INITDB_USERNAME=nlpjs
+      - MONGO_INITDB_PASSWORD=nlpjs
     volumes:
-      - ${PWD}/mongo_data/data:/data/db
-      - ${PWD}/mongo_data/init:/docker-entrypoint-initdb.d/
-      # it is also possible to map the path "/data/configdb"
-      # use this mapping option just in case is required to setup a fine grained DB configuration
+      - mongo_data:/data/db
+      - ./docker/mongo/mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh    # Init at 1st run
     expose:
       - "27017"
     networks:
@@ -27,37 +30,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-  nlpjs-app:
-    image: node:8.9.4
-    container_name: nlpjs_app
-    environment:
-      - MONGO_URL=mongodb://nlpjs_user:nlpjs_pass@nlpjs_mongo:27017/nlpjs
-    volumes:
-      - ${PWD}/public:/opt/public
-      - ${PWD}/server:/opt/server
-      - ${PWD}/node_modules:/opt/node_modules
-      - ${PWD}/package.json:/opt/package.json
-    working_dir: /opt
-    ports:
-      - "3000:3000"
-    networks:
-      - nlpjs
-    stop_signal: SIGTERM
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "--quiet", "-T", "2", "-t", "1", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    depends_on:
-      - mongo
-    # it is also possible add the command "npm cache clean --force" before the current commands
-    # this variant forces to erase and re-download the NPM dependencies, so more large process time,
-    # so may allow less sleep time lapse to be required
-    entrypoint: "/bin/bash -c 'npm install && sleep 40s && node .'"
+
   mongo-express:
     image: mongo-express:0.49.0
-    container_name: nlpjs_mongo_express
     environment:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=myadmin
       - ME_CONFIG_MONGODB_ADMINPASSWORD=myadmin
@@ -78,3 +53,26 @@ services:
       retries: 3
       start_period: 30s
     entrypoint: "/bin/bash -c 'sleep 40s && tini -p SIGTERM -- /docker-entrypoint.sh mongo-express'"
+
+  nlpjs-app:
+    build: 
+      context: .
+      dockerfile: ./docker/nlpjs-app/Dockerfile
+    environment:
+      - MONGO_URL=mongodb://nlpjs:nlpjs@mongo:27017/nlpjs
+      # - SETTINGS_URL=http://localhost:3002
+      # - API_URL=http://localhost:3002
+      # - PORT=3002
+    ports:
+      - "3000:3000"
+    networks:
+      - nlpjs
+    stop_signal: SIGTERM
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--spider", "--quiet", "-T", "2", "-t", "1", "http://localhost:3000"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+    depends_on:
+      - mongo
