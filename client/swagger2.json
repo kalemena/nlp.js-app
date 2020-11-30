@@ -57,7 +57,7 @@
     },
     "/settings": {
       "get": {
-        "summary": "Return all the setings of the system",
+        "summary": "Return all the settings of the system",
         "operationId": "getSettings",
         "tags": ["settings"],
         "responses": {
@@ -231,7 +231,7 @@
     },
     "/doc/{id}": {
       "get": {
-        "summary": "Return all the setings of the system",
+        "summary": "Return all the settings of the system",
         "operationId": "getDocId",
         "parameters": [{
           "type": "number",
@@ -750,7 +750,7 @@
     },
     "/agent/{id}/settings": {
       "get": {
-        "summary": "Return all the setings of the agent",
+        "summary": "Return all the settings of the agent",
         "operationId": "getAgentIdSettings",
         "parameters": [{
           "type": "string",
