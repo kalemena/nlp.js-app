@@ -64,7 +64,7 @@ services:
       # - API_URL=http://localhost:3002
       # - PORT=3002
     ports:
-      - "3000:3000"
+      - "3010:3010"
     networks:
       - nlpjs
     stop_signal: SIGTERM
